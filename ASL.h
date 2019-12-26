@@ -9,6 +9,7 @@
 
 #if DEV
 #define print(x) std::cout << x << std::endl;
+//Inline definition changed from "inline function preferred" to "multiple defenitions"
 #else
 #error Changes to ASL.h not allowed
 #endif
@@ -29,7 +30,7 @@ namespace asl {
         static_assert(std::is_convertible_v<_st, bool>, "'conjunction': all parameters must be booleans");
         return st and conjunction(mul...);
     }
-
+    
     //Checks at compile time if at least one conditions is true.
     template<typename _st>
     constexpr bool disjunction(_st st) {
@@ -87,22 +88,22 @@ namespace asl {
         {}
 
         //Operator Invocation.
-        inline return_type operator()() const {
+        return_type operator()() const {
             return m_func();
         }
 
         //Gets the function.
-        inline call get() const noexcept {
+        call get() const noexcept {
             return m_func;
         }
 
         //Returns true whether is std::nullptr_t or not.
-        inline constexpr bool is_nullptr_t() const noexcept {
+        constexpr bool is_nullptr_t() const noexcept {
             return false;
         }
 
         //Returns true whether is nullpointing or not.
-        inline bool is_nullptr() const noexcept {
+        bool is_nullptr() const noexcept {
             return m_func == nullptr;
         }
     };
@@ -112,9 +113,9 @@ namespace asl {
     class deleter<std::nullptr_t>{
     public:
         explicit deleter(std::nullptr_t){}
-        inline constexpr void operator()() const noexcept {}
-        inline constexpr bool is_nullptr_t() const noexcept {return true;}
-        inline constexpr bool is_nullptr() const noexcept {return true;}
+        constexpr void operator()() const noexcept {}
+        constexpr bool is_nullptr_t() const noexcept {return true;}
+        constexpr bool is_nullptr() const noexcept {return true;}
     };
     deleter(std::nullptr_t)->deleter<std::nullptr_t>;
 
@@ -183,12 +184,12 @@ namespace asl {
         //smart_ptr<TYPE, is_arr>& operator=(smart_ptr<TYPE, is_arr>&&); move assignment
 
         //Get raw pointer.
-        inline gen* get() const & noexcept {
+        gen* get() const & noexcept {
             return m_data;
         }
 
         //Dereference pointer.
-        inline gen& operator*() const {
+        gen& operator*() const {
             return *m_data;
         }
 
@@ -205,12 +206,12 @@ namespace asl {
         }
 
         //Returns true whether is nullpointing or not.
-        inline bool is_nullptr() const noexcept {
+        bool is_nullptr() const noexcept {
             return m_data == nullptr;
         }
 
         //Converts to a std::unique_ptr.
-        explicit operator std::unique_ptr<TYPE>() {
+        explicit operator std::unique_ptr<TYPE>() noexcept {
             TYPE* const holder = m_data;
             m_data = nullptr;
             return std::unique_ptr<TYPE>(holder);
@@ -283,7 +284,7 @@ namespace asl {
         }
 
         //Discard memory address, loses the pointer.
-        inline void discard() noexcept {
+        void discard() noexcept {
             this->m_data = nullptr;
         }
 
@@ -373,7 +374,7 @@ namespace asl {
                     this->discard();
         }
         template<>
-        inline constexpr void des_impl<std::nullptr_t>()noexcept {}
+        constexpr void des_impl<std::nullptr_t>()noexcept {}
 
     public:
         //Constructor.
@@ -400,12 +401,12 @@ namespace asl {
         lambda_ptr& operator=(const lambda_ptr&) = delete; //No copy allowed
 
         //Gets the deleter of the object for const objects.
-        inline const deleter<del_ty>& getDeleter() const& noexcept {
+        const deleter<del_ty>& getDeleter() const& noexcept {
             return m_del;
         }
 
         //Gets the deleter of the object.
-        inline deleter<del_ty>& getDeleter()& noexcept {
+        deleter<del_ty>& getDeleter()& noexcept {
             return m_del;
         }
 
@@ -434,7 +435,7 @@ namespace asl {
     lambda_ptr(TYPE*, asl::deleter<del_ty>)->lambda_ptr<TYPE, del_ty, is_arr>;
 
     //Null deleter that does nothing.
-    inline constexpr void nullFunc(...) {};
+    constexpr void nullFunc(...) {};
     static constexpr void(*nullDel)(...) = nullFunc;
 
 
@@ -558,38 +559,38 @@ namespace asl {
         }
 
         //Operator *.
-        inline const gen& operator*() & {
+        const gen& operator*() & {
             return *m_buffer;
         }
 
         //Operator *.
-        inline const gen& operator*() const & {
+        const gen& operator*() const & {
             return *m_buffer;
         }
 
         //Operator [].
-        inline gen& operator[](size_t index) {
+        gen& operator[](size_t index) {
             return m_buffer[index];
         }
         
         //Operator [].
-        inline const gen& operator[](size_t index) const {	 
+        const gen& operator[](size_t index) const {	 
             return m_buffer[index];
         }
 
         //Returns pointer to start of array;
-        inline gen* get() & noexcept { 
+        gen* get() & noexcept { 
             return m_buffer; //Rvalue cant call this function, getting memory address
                              //of the internal array will dangle since obj is a rvalue
         }
 
         //Returns pointer to start of array;               
-        inline const gen* get() const & noexcept  { 
+        const gen* get() const & noexcept  { 
             return m_buffer;
         }
 
         //Gets the array size.
-        inline constexpr size_t size() const noexcept {
+        constexpr size_t size() const noexcept {
             return _size;
         }
 
@@ -600,7 +601,7 @@ namespace asl {
         };
 
         //Checks whether the array is empty.
-        inline bool is_empty() const noexcept {
+        bool is_empty() const noexcept {
             return m_buffer == nullptr;
         }
 
@@ -612,12 +613,12 @@ namespace asl {
         }
 
         //Support for range based for-loop.
-        inline gen* begin() & {
+        gen* begin() & {
             return m_buffer;
         }
 
         //Support for range based for-loop.
-        inline gen* end() & {
+        gen* end() & {
             return m_buffer+_size;
         }
 
@@ -645,7 +646,7 @@ namespace asl {
         };
 
         //Remakes backup of the tracked object
-        inline void makeBackup() {
+        void makeBackup() {
             memcpy(&m_backup, m_tracking, sizeof(TYPE));
         }
 
@@ -671,7 +672,7 @@ namespace asl {
         //No distinction from copy to moving
 
         //Gets size of tracking object.
-        inline constexpr size_t getSize() const noexcept {
+        constexpr size_t getSize() const noexcept {
             return sizeof(TYPE);
         }
 
@@ -685,23 +686,23 @@ namespace asl {
         }
 
         //Restores any changes to the tracked object.
-        inline void restore() const {
+        void restore() const {
             static_assert(!std::is_const_v<TYPE>, "Cannot restore const objects");
             (*m_tracking) = m_backup;
         }
 
         //Returns the object being tracked.
-        inline TYPE* get() const noexcept {
+        TYPE* get() const noexcept {
             return m_tracking;
         }
 
         //Gets the backup.
-        inline const TYPE& getBackup() const noexcept {
+        const TYPE& getBackup() const noexcept {
             return m_backup;
         }
 
         //Sets the backup.
-        inline void setBackup(const TYPE& backup) {
+        void setBackup(const TYPE& backup) {
             m_backup = backup;
         }
 
@@ -758,12 +759,12 @@ namespace asl {
 
     public:
         //Gets the value of the current Node.
-        inline type& value() & {
+        type& value() & {
             return m_elem;
         }
 
         //Gets the next node.
-        inline node<type>& dive() {
+        node<type>& dive() {
             try {
                 if (m_next.is_nullptr()) 
                     throw std::out_of_range("Exception in node, trying to access "
@@ -823,17 +824,17 @@ namespace asl {
         }
 
         //Gets the last node.
-        inline node<type>& tail() {
+        node<type>& tail() {
             return dive(m_depth);
         }
 
         //Addressing operator.
-        inline type& operator[](size_t index) {
+        type& operator[](size_t index) {
             return dive(index).m_elem;
         }
 
         //Gets the length of the list.
-        inline size_t size() const noexcept {
+        size_t size() const noexcept {
             return m_depth+1;
         }
 
@@ -866,7 +867,7 @@ namespace asl {
         }
 
         //Takes the last node out of the list.
-        inline void pop() {
+        void pop() {
             dive(m_depth - 1).m_next.free();
             m_depth--;
         }
@@ -933,7 +934,7 @@ namespace asl {
         {}
 
         //Gets the value of the current Node.
-        inline type& value()& {
+        type& value()& {
             return m_start->m_elem;
         }
 
@@ -979,22 +980,22 @@ namespace asl {
         }
 
         //Gets the length of the list.
-        inline size_t size() const noexcept {
+        size_t size() const noexcept {
             return m_depth + 1;
         }
 
         //Addressing operator.
-        inline type& operator[](size_t where) {
+        type& operator[](size_t where) {
             return dive(where).m_elem;
         }
 
         //Gets the last node.
-        inline node<type>& tail() {
+        node<type>& tail() {
             return dive(m_depth);
         }
         
         //Takes the last node out of the list.
-        inline void pop() {
+        void pop() {
             dive(m_depth-- - 1).m_next.free();
         }
 
@@ -1082,27 +1083,27 @@ namespace asl {
         pair() = default;
 
         //Setter First Elem.
-        inline void setFirst(const ty& first) noexcept {
+        void setFirst(const ty& first) noexcept {
             m_first = first;
         }
         
         //Setter Second Elem.
-        inline void setSecond(const ty& second) noexcept {
+        void setSecond(const ty& second) noexcept {
             m_second = second;
         }
 
         //Getter Fist Elem.
-        inline ty getFirst() const noexcept {
+        ty getFirst() const noexcept {
             return m_first;
         }
 
         //Getter First Elem.
-        inline ty getSecond() const noexcept {
+        ty getSecond() const noexcept {
             return m_second;
         }
 
         //Swap member variables.
-        inline void swap() noexcept {
+        void swap() noexcept {
             //ty temp(m_first);
             //m_first = m_second;
             //m_second = m_first;
@@ -1136,22 +1137,22 @@ namespace asl {
         }
 
         //Get value if true.
-        inline type getIfTrue() const noexcept{
+        type getIfTrue() const noexcept{
             return this->getFirst();
         }
 
         //Get value if false.
-        inline type getIfFalse() const noexcept {
+        type getIfFalse() const noexcept {
             return this->getSecond();
         }
 
         //Set value if true.
-        inline void setIfTrue(const type& if_true) noexcept {
+        void setIfTrue(const type& if_true) noexcept {
             this->setFirst(if_true);
         }
 
         //Set value if false.
-        inline void setIfFalse(const type& if_false) noexcept {
+        void setIfFalse(const type& if_false) noexcept {
             this->setSecond(if_false);
         }
 
@@ -1221,28 +1222,28 @@ namespace asl {
         }
 
         //Getter hour.
-        inline int gHour() const noexcept {
+        int gHour() const noexcept {
             return m_hour;
         }
 
         //Getter minute.
-        inline int gMinute() const noexcept {
+        int gMinute() const noexcept {
             return m_min;
         }
 
         //Setter hour.
-        inline void sHour(int hour) {
+        void sHour(int hour) {
             m_hour = hour;
         }
 
         //Setter minute.
-        inline void sMinute(int minute) {
+        void sMinute(int minute) {
             m_min = minute;
             if constexpr (auto_adjust) adjust();
         }
 
         //Explicit conversion to float.
-        inline explicit operator float() const noexcept {
+        explicit operator float() const noexcept {
             return m_hour + (static_cast<float>(m_min) / 60);
         }
         
@@ -1261,32 +1262,32 @@ namespace asl {
         }
 
         //Operator <.
-        inline const bool operator<(const time& rhs) const noexcept {
+        const bool operator<(const time& rhs) const noexcept {
             return (this->operator float() < rhs.operator float());
         }
 
         //Operator >=.
-        inline const bool operator>=(const time& rhs) const noexcept {
+        const bool operator>=(const time& rhs) const noexcept {
             return !operator<(rhs);
         }
 
         //Operator >.
-        inline const bool operator>(const time& rhs) const noexcept {
+        const bool operator>(const time& rhs) const noexcept {
             return (this->operator float() > rhs.operator float());
         }
 
         //Operator <=.
-        inline const bool operator<=(const time& rhs) const noexcept {
+        const bool operator<=(const time& rhs) const noexcept {
             return !operator>(rhs);
         }
 
         //Operator ==
-        inline const bool operator==(const time& rhs) const noexcept {
+        const bool operator==(const time& rhs) const noexcept {
             return this->operator float() == rhs.operator float();
         }
 
         //Operator !=
-        inline const bool operator!=(const time& rhs) const noexcept {
+        const bool operator!=(const time& rhs) const noexcept {
             return this->operator float() != rhs.operator float();
         }
 
